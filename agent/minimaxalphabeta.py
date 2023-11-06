@@ -40,11 +40,3 @@ def minimax(depth, node_index, maximizing_player, value_arr, alpha, beta):
                 break
 
         return best
-
-
-# Driver Code
-if __name__ == "__main__":
-    value_arr = [3, 5, 6, 9, 1, 2, 0, -1]
-    print("The optimal value is :", minimax(0, 0, True, value_arr, MIN, MAX))
-
-
