@@ -1,172 +1,289 @@
-import sys
-
-from transitionmodel import STARTING_NUMBER_OF_SEEDS, PLAYER_1_PITS, PLAYER_2_PITS, NEXT_PIT, OPPOSITE_PIT
+from typing import Tuple
+import copy
+from actions import action
+from agent import minimaxalphabeta
+from transition_model.transitionmodel import STARTING_NUMBER_OF_SEEDS, PLAYER_1_SIDE, PLAYER_2_SIDE, PLAYER_1_SCORE, \
+    PLAYER_2_SCORE
 
 
 class Board:
     def __init__(self, other=None):
+
         print('''Start playing Mancala''')
-
         input('Press Enter to begin...')
-        game_board = self.get_new_Board()
-        playerTurn = '1'  # Player 1 goes first.
 
-        while True:  # Run a player's turn.
-            # "Clear" the screen by printing many newlines, so the old
-            # board isn't visible anymore.
-            print('\n' * 60)
-            # Display board and get the player's move:
-            self.displayBoard(game_board)
-            playerMove = self.ask_player_move(playerTurn, game_board)
+        choice = input('If you would like to play multiplier press 1, or vs computer press 2')
 
-            # Carry out the player's move:
-            playerTurn = self.make_move(game_board, playerTurn, playerMove)
-
-            # Check if the game ended and a player has won:
-            winner = self.check_winner(game_board)
-            if winner == '1' or winner == '2':
-                self.displayBoard(game_board)  # Display the board one last time.
-                print('Player ' + winner + ' has won!')
-                sys.exit()
-            elif winner == 'tie':
-                self.displayBoard(game_board)  # Display the board one last time.
-                print('There is a tie!')
-                sys.exit()
+        if choice == str(1):
+            print('''Multiplier Game''')
+            self.playerVSPlayer(self)
+        elif choice == str(2):
+            print('''Human vs Computer Game''')
+            print('''Computer is the player 1''')
+            print('''Human is the player 2''')
+            print('''Please wait computer plays''')
+            self.playerVSAI(self)
 
     @staticmethod
-    def get_new_Board():
-        """Return a dictionary representing a Mancala board in the starting
-        state: 4 seeds in each pit and 0 in the stores."""
+    def playerVSPlayer(self):
 
-        # Syntactic sugar - Use a shorter variable name:
+        board = self.buildBoard()
 
-        s = STARTING_NUMBER_OF_SEEDS
+        # Mapping for how confident the algorithm is on winning the game (ballpark)
+        total_pieces = sum(board[PLAYER_1_SIDE]) + sum(board[PLAYER_2_SIDE])
+        winning_confidence_mapping = {
+            -(total_pieces // 8): "Terrible",
+            -(total_pieces // total_pieces): "Bad",
+            total_pieces // 16: "Possible",
+            total_pieces // 8: "Good",
+            total_pieces + 1: "Certain",
+        }
 
-        # Create the data structure for the board, with 0 seeds in the
-        # stores and the starting number of seeds in the pits:
+        # Displaying the board so the user know what they are selecting
+        self.print_board(board)
+        # Collecting what type the user is
+        PLAYER1 = PLAYER_1_SIDE  # get_player_type()
 
-        return {'1': 0, '2': 0, 'A': s, 'B': s, 'C': s, 'D': s, 'E': s,
-                'F': s, 'G': s, 'H': s, 'I': s, 'J': s, 'K': s, 'L': s}
+        # Some final inits before starting the game
+        PRINT_P1 = "P 1"
+        PRINT_P2 = "P 2"
+        PLAYER2 = PLAYER_2_SIDE
+        MAX_DEPTH = 6
+
+        # Top always goes first, feel free to change if you want to be a reble
+        turn = PLAYER_1_SIDE
+
+        # visual for what the AI did
+        ai_printed_moves = []
+
+        # While the games not over!!!
+        while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
+            # Players move
+            if turn == PLAYER1:
+                # Getting the players move
+                move = self.get_player_move(board, PLAYER1)
+
+                # Updating the board
+                board, go_again = action.move_piece(board, move, PLAYER1)
+
+            # AI's move
+            elif turn == PLAYER2:
+                # Getting the players move
+                move = self.get_player_move(board, PLAYER2)
+
+                # Updating the board
+                board, go_again = action.move_piece(board, move, PLAYER2)
+
+            # 4. If the last piece you drop is in your own Mancala, you take another turn.
+            if not go_again:
+                turn = PLAYER_2_SIDE if turn == PLAYER_1_SIDE else PLAYER_1_SIDE
+
+            # Shows the new baord
+            self.clear_screen()
+            if (turn == PLAYER1) and ai_printed_moves:
+                [print(move) for move in ai_printed_moves]
+                ai_printed_moves = []
+            self.print_board(board, PRINT_P1, PRINT_P2)
+
+        # WIN / LOSS / DRAW
+        if board[f"{PLAYER1}_score"] > board[f"{PLAYER2}_score"]:
+            print(
+                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
+            )
+        elif board[f"{PLAYER1}_score"] < board[f"{PLAYER2}_score"]:
+            print(
+                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
+            )
+        else:
+            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
 
     @staticmethod
-    def displayBoard(board):
+    def playerVSAI(self):
+        # Default board, feel free to update if you know what you're doing and want a more interesting game.
+        # The code should be set up mostly generic enough to handle different boards / piece amount
+        board = self.buildBoard()
+
+        # Mapping for how confident the algorithm is on winning the game (ballpark)
+        total_pieces = sum(board[PLAYER_1_SIDE]) + sum(board[PLAYER_2_SIDE])
+        winning_confidence_mapping = {
+            -(total_pieces // 8): "Terrible",
+            -(total_pieces // total_pieces): "Bad",
+            total_pieces // 16: "Possible",
+            total_pieces // 8: "Good",
+            total_pieces + 1: "Certain",
+        }
+
+        # Displaying the board so the user know what they are selecting
+        self.print_board(board)
+        # Collecting what type the user is
+        PLAYER = PLAYER_2_SIDE  # get_player_type()
+
+        # Some final inits before starting the game
+        PRINT_P1 = "CPU"
+        PRINT_P2 = "YOU"
+        AI = PLAYER_1_SIDE
+        MAX_DEPTH = 6
+
+        # Top always goes first, feel free to change if you want to be a reble
+        turn = PLAYER_1_SIDE
+
+        # visual for what the AI did
+        ai_printed_moves = []
+
+        # While the games not over!!!
+        while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
+            # Players move
+            if turn == PLAYER:
+                # Getting the players move
+                move = self.get_player_move(board, PLAYER)
+
+                # Updating the board
+                board, go_again = action.move_piece(board, move, PLAYER)
+
+            # AI's move
+            elif turn == AI:
+                # Getting the AI's move with the Minimax function
+                best_score, move = minimaxalphabeta.minimax_mancala(board, AI, turn, MAX_DEPTH)
+
+                # Visual aid to show of confident the minimax algorithm is in winning
+                winning_confidence = ""
+                for score, confidence in winning_confidence_mapping.items():
+                    if score < best_score:
+                        continue
+                    winning_confidence = confidence
+                    break
+                ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
+
+                # Updating the board
+                board, go_again = action.move_piece(board, move, AI)
+
+            # 4. If the last piece you drop is in your own Mancala, you take another turn.
+            if not go_again:
+                turn = PLAYER_2_SIDE if turn == PLAYER_1_SIDE else PLAYER_1_SIDE
+
+            # Shows the new baord
+            self.clear_screen()
+            if (turn == PLAYER) and ai_printed_moves:
+                [print(move) for move in ai_printed_moves]
+                ai_printed_moves = []
+            self.print_board(board, PRINT_P1, PRINT_P2)
+
+        # WIN / LOSS / DRAW
+        if board[f"{PLAYER}_score"] > board[f"{AI}_score"]:
+            print(
+                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
+            )
+        elif board[f"{PLAYER}_score"] < board[f"{AI}_score"]:
+            print(
+                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
+            )
+        else:
+            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
+
+    @staticmethod
+    def buildBoard():
         """Displays the game board as ASCII-art based on the board
           dictionary."""
 
-        seedAmounts = []
-        # This 'GHIJKL21ABCDEF' string is the order of the pits left to
-        # right and top to bottom:
-        for pit in 'GHIJKL21ABCDEF':
-            numSeedsInThisPit = str(board[pit]).rjust(2)
-            seedAmounts.append(numSeedsInThisPit)
-
-        print("""
-         +------+------+--<<<<<-Player 2----+------+------+------+
-         2      |G     |H     |I     |J     |K     |L     |      1
-                |  {}  |  {}  |  {}  |  {}  |  {}  |  {}  |
-         S      |      |      |      |      |      |      |      S
-         T  {}  +------+------+------+------+------+------+  {}  T
-         O      |A     |B     |C     |D     |E     |F     |      O
-         R      |  {}  |  {}  |  {}  |  {}  |  {}  |  {}  |      R
-         E      |      |      |      |      |      |      |      E
-         +------+------+------+-Player 1->>>>>-----+------+------+
-         
-         """.format(*seedAmounts))
+        board = {
+            PLAYER_1_SIDE: [STARTING_NUMBER_OF_SEEDS] * 6,
+            PLAYER_2_SIDE: [STARTING_NUMBER_OF_SEEDS] * 6,
+            PLAYER_1_SCORE: 0,
+            PLAYER_2_SCORE: 0,
+        }
+        return board
 
     @staticmethod
-    def ask_player_move(playerTurn, game_board):
-        """Asks the player which pit on their side of the board they
-         select to sow seeds from. Returns the uppercase letter label of the
-         selected pit as a string."""
-        while True:  # Keep asking the player until they enter a valid move.
-            # Ask the player to select a pit on their side:
-            if playerTurn == '1':
-                print('Player 1, choose move: A-F (or QUIT)')
-            elif playerTurn == '2':
-                print('Player 2, choose move: G-L (or QUIT)')
-            response = input('> ').upper().strip()
+    def print_board(board: dict, player_1: str = "P 1", player_2: str = "P 2") -> None:
+        """A function to display the board
 
-            # Check if the player wants to quit:
-            if response == 'QUIT':
-                print('Thanks for playing!')
-                sys.exit()
-
-            # Make sure it is a valid pit to select:
-            if (playerTurn == '1' and response not in PLAYER_1_PITS) or (
-                    playerTurn == '2' and response not in PLAYER_2_PITS):
-                print('Please pick a letter on your side of the board.')
-                continue  # Ask player again for their move.
-            if game_board.get(response) == 0:
-                print('Please pick a non-empty pit.')
-                continue  # Ask player again for their move.
-            return response
-
-    @staticmethod
-    def make_move(game_board, playerTurn, pit):
-        """Modify the board data structure so that the player 1 or 2 in
-        turn selected pit as their pit to sow seeds from. Returns either
-        '1' or '2' for whose turn it is next."""
-
-        seeds_to_sow = game_board[pit]  # Get number of seeds from selected pit.
-        game_board[pit] = 0  # Empty out the selected pit.
-
-        while seeds_to_sow > 0:  # Continue sowing until we have no more seeds.
-            pit = NEXT_PIT[pit]  # Move on to the next pit.
-            if (playerTurn == '1' and pit == '2') or (playerTurn == '2' and pit == '1'):
-                continue  # Skip opponent's store.
-            game_board[pit] += 1
-            seeds_to_sow -= 1
-
-        # If the last seed went into the player's store, they go again.
-        if (pit == playerTurn == '1') or (pit == playerTurn == '2'):
-            # The last seed landed in the player's store; take another turn.
-            return playerTurn
-
-        # Check if last seed was in an empty pit; take opposite pit's seeds.
-        if playerTurn == '1' and pit in PLAYER_1_PITS and game_board[pit] == 1:
-            opposite_pit = OPPOSITE_PIT[pit]
-            game_board['1'] += game_board[opposite_pit]
-            game_board[opposite_pit] = 0
-        elif playerTurn == '2' and pit in PLAYER_2_PITS and game_board[pit] == 1:
-            opposite_pit = OPPOSITE_PIT[pit]
-            game_board['2'] += game_board[opposite_pit]
-            game_board[opposite_pit] = 0
-
-        # Return the other player as the next player:
-        if playerTurn == '1':
-            return '2'
-        elif playerTurn == '2':
-            return '1'
+        Args:
+            board (dict): Schema
+            {
+                "top"          : [4, 4, 4, 4, 4, 4],
+                "bottom"       : [4, 4, 4, 4, 4, 4],
+                "top_score"    : 0,
+                "bottom_score" : 0
+            }
+            :param player_2:
+            :param board:
+            :param player_1:
+        """
+        print(
+            f"""
+       {''.join(f'{(len(board["top"]) - num):3}' for num in range(len(board['top'])))}
+    +---+{'--+' * len(board['top'])}---+
+    |{player_1}|{'|'.join(f'{item:2}' for item in reversed(board['top']))}|   | <- PLAYER 1
+    |{board["top_score"]:3}+{'--+' * len(board['top'])}{board["bottom_score"]:3}|
+    |   |{'|'.join(f'{item:2}' for item in board['bottom'])}|{player_2}| PLAYER 2 ->
+    +---+{'--+' * len(board['bottom'])}---+
+       {''.join(f'{(num + 1):3}' for num in range(len(board['bottom'])))}
+    """
+        )
+        return
 
     @staticmethod
-    def check_winner(game_board):
-        """Looks at board and returns either '1' or '2' if there is a
-        winner or 'tie' or 'no winner' if there isn't. The game ends when a
-        player's pits are all empty; the other player claims the remaining
-        seeds for their store. The winner is whoever has the most seeds."""
+    def get_player_move(board: dict, turn: str) -> int:
+        """A function to get the players move
 
-        player1Total = game_board['A'] + game_board['B'] + game_board['C']
-        player1Total += game_board['D'] + game_board['E'] + game_board['F']
-        player2Total = game_board['G'] + game_board['H'] + game_board['I']
-        player2Total += game_board['J'] + game_board['K'] + game_board['L']
+        Args:
+            board (dict): Schema
+            {
+                "top"          : [4, 4, 4, 4, 4, 4],
+                "bottom"       : [4, 4, 4, 4, 4, 4],
+                "top_score"    : 0,
+                "bottom_score" : 0
+            }
+            turn (str): 'top' or 'bottom'
 
-        if player1Total == 0:
-            # Player 2 gets all the remaining seeds on their side:
-            game_board['2'] += player2Total
-            for pit in PLAYER_2_PITS:
-                game_board[pit] = 0  # Set all pits to 0.
-        elif player2Total == 0:
-            # Player 1 gets all the remaining seeds on their side:
-            game_board['1'] += player1Total
-            for pit in PLAYER_1_PITS:
-                game_board[pit] = 0  # Set all pits to 0.
-        else:
-            return 'no winner'  # No one has won yet.
+        Returns:
+            int: a valid move of the player
+        """
+        while True:
+            playerturn = "Player 1 turn" if turn == PLAYER_1_SIDE else "Player 2 turn"
+            print(playerturn)
+            player_move = input("Please Select A Move.\n:")
+            if "quit" in player_move.lower():
+                quit()
+            try:
+                player_move = int(player_move) - 1
+            except ValueError:
+                print("Please Make Sure To Enter A Valid Number.")
+                continue
 
-        # Game is over, find player with the largest score.
-        if game_board['1'] > game_board['2']:
-            return '1'
-        elif game_board['2'] > game_board['1']:
-            return '2'
-        else:
-            return 'tie'
+            if action.is_legal_move(board, player_move, turn):
+                return player_move
+
+            print("Sorry, That Is Not A Valid Move.")
+
+    @staticmethod
+    def clear_screen() -> None:
+        """
+        *NOTE*
+        some terminals may not work well with this code, please feel free to try out this instead...
+
+        # IMPORT THIS AT THE TOP OF THE FILE
+        import os
+        os.system('cls' if os.name == 'nt' else 'clear')
+        """
+        # Clearing screen to make the game visually appealing when updating
+        print("\033c", end="")
+
+    @staticmethod
+    def get_player_type() -> str:
+        """A function to get the players type (top goes first)
+
+        Returns:
+            str: 'top' or 'bottom'
+        """
+        while True:
+            player_input = input(
+                "Please Enter Which Player You Want To Be :\n1. Player 1\n2. Player 2\n:"
+            )
+            if "quit" in player_input.lower():
+                quit()
+            elif "1" in player_input:
+                return PLAYER_1_SIDE
+            elif "2" in player_input:
+                return PLAYER_2_SIDE
+            print("Please Make Sure You Are Entering One Of The Two Options Listed.")
