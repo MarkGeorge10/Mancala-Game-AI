@@ -49,6 +49,7 @@ def move_piece(board: dict, tile: int, turn: str) -> Tuple[dict, bool]:
                     }
                     go_again (bool): indicats if the user is able ot make another turn
             """
+
     pieces = board[turn][tile]
     board[turn][tile] = 0
     location = turn
@@ -112,3 +113,42 @@ def move_piece(board: dict, tile: int, turn: str) -> Tuple[dict, bool]:
         go_again = False
 
     return board, go_again
+
+
+def getMove(board: dict, turn: str) -> int:
+    """A function to get the players move
+
+        Args:
+            board (dict): Schema
+            {
+                "top"          : [4, 4, 4, 4, 4, 4],
+                "bottom"       : [4, 4, 4, 4, 4, 4],
+                "top_score"    : 0,
+                "bottom_score" : 0
+            }
+            turn (str): 'top' or 'bottom'
+
+        Returns:
+            int: a valid move of the player
+        """
+    while True:
+        playerturn = "Player 1 turn" if turn == PLAYER_1_SIDE else "Player 2 turn"
+        print(playerturn)
+        player_move = input("Please Select A Move.\n:")
+        if "quit" in player_move.lower():
+            quit()
+        try:
+            player_move = int(player_move) - 1
+        except ValueError:
+            print("Please Make Sure To Enter A Valid Number.")
+            continue
+
+        if is_legal_move(board, player_move, turn):
+            return player_move
+
+        print("Sorry, That Is Not A Valid Move.")
+
+
+
+
+
