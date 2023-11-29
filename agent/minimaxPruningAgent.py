@@ -1,7 +1,7 @@
 import copy
 from typing import Tuple
 
-from actions import action
+from actions.action import Action
 from transition_model.transitionmodel import PLAYER_1_SIDE, PLAYER_2_SIDE
 
 
@@ -29,8 +29,12 @@ class MinimaxPruningAgent:
                    move (int) : the recommended minimax move
                        - this is used in decision-making for executing the best move
            """
-    @staticmethod
-    def minimaxPruning(board: dict, ai_side: str, turn: str, depth: int) -> Tuple[int, int]:
+
+    def __init__(self):
+        self.action = Action(qlearningAgent=None)
+
+
+    def minimaxPruning(self, board: dict, ai_side: str, turn: str, depth: int) -> Tuple[int, int]:
 
         AI = ai_side
         PLAYER = PLAYER_2_SIDE if PLAYER_1_SIDE == ai_side else PLAYER_1_SIDE
@@ -46,21 +50,19 @@ class MinimaxPruningAgent:
             # only uphill from here
             best_score = float("-inf")
 
-            possible_moves = [
-                move for move in range(len(board[AI])) if action.is_legal_move(board, move, AI)
-            ]
+            possible_moves = self.action.getMoveAI(board, AI)
 
             for move in possible_moves:
                 # preforming a deepcopy so we don't accidently overwrite moves by referencing the same list
                 board_copy = copy.deepcopy(board)
-                board_copy, go_again = action.move_piece(board_copy, move, turn)
+                board_copy, go_again = self.action.move_piece(board_copy, move, turn)
 
                 # mancala is one of those games where you can get two moves.
                 # In testing, I found that not decressing the depth for the multimove results in the best AI
                 if go_again:
-                    points, _ = MinimaxPruningAgent.minimaxPruning(board_copy, AI, AI, depth)
+                    points, _ = self.minimaxPruning(board_copy, AI, AI, depth)
                 else:
-                    points, _ = MinimaxPruningAgent.minimaxPruning(board_copy, AI, PLAYER, depth - 1)
+                    points, _ = self.minimaxPruning(board_copy, AI, PLAYER, depth - 1)
 
                 # The MAX part of minimax. Finding the MAX output for the AI
                 if points > best_score:
@@ -70,23 +72,19 @@ class MinimaxPruningAgent:
         # Finding the move which will give the least points to the PLAYER
         elif PLAYER == turn:
             best_score = float("inf")
-            possible_moves = [
-                move
-                for move in range(len(board[PLAYER]))
-                if action.is_legal_move(board, move, PLAYER)
-            ]
 
+            possible_moves = self.action.getMoveAI(board, PLAYER)
             for move in possible_moves:
                 # preforming a deepcopy so we don't accidently overwrite moves by referencing the same list
                 board_copy = copy.deepcopy(board)
-                board_copy, go_again = action.move_piece(board_copy, move, turn)
+                board_copy, go_again = self.action.move_piece(board_copy, move, turn)
 
                 # mancala is one of those games where you can get two moves.
                 # In testing, I found that not decressing the depth for the multimove results in the best AI
                 if go_again:
-                    points, _ = MinimaxPruningAgent.minimaxPruning(board_copy, AI, PLAYER, depth)
+                    points, _ = self.minimaxPruning(board_copy, AI, PLAYER, depth)
                 else:
-                    points, _ = MinimaxPruningAgent.minimaxPruning(board_copy, AI, AI, depth - 1)
+                    points, _ = self.minimaxPruning(board_copy, AI, AI, depth - 1)
 
                 # The MIN part of minimax. Finding the MIN output for the PLAYER
                 if points < best_score:

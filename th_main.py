@@ -2,7 +2,6 @@ import time
 import tkinter as tk
 from tkinter import font
 
-from mainma import minimax_mancala
 
 class MancalaTkinterUI(tk.Tk):
     def __init__(
