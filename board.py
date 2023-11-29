@@ -1,6 +1,6 @@
 from typing import Tuple
 import copy
-from actions.action import move_piece,getMove
+from actions.action import Action
 from transition_model.transitionmodel import STARTING_NUMBER_OF_SEEDS, PLAYER_1_SIDE, PLAYER_2_SIDE, PLAYER_1_SCORE, \
     PLAYER_2_SCORE
 from agent.minimaxPruningAgent import MinimaxPruningAgent
@@ -11,10 +11,26 @@ import os
 class Board:
 
     def __init__(self, reinforcementLearning=False, other=None):
-
+        self.loaded_agent = QlearningRL(load_agent_path=None)
+        self.action = Action(qlearningAgent=self.loaded_agent)
+        self.model_save_path = 'mancala_agent.pkl'
         if reinforcementLearning:
-            self.loaded_agent = QlearningRL(load_agent_path=None)
-            self.RLVSRL()
+            print('aaaaaaaaaaaaaaaaaa')
+            n_games = 10000
+            games_per_checkpoint = 2500
+
+
+            while n_games > 0:
+                self.RLVsRL()
+                # Checkpoint
+                if n_games % games_per_checkpoint == 0:
+                    self.loaded_agent.save_agent(self.model_save_path)
+                    print('Saved RL Agent Model!')
+                    print('Remaining Games: ', n_games)
+                n_games -= 1
+                # Save final agent model
+            self.loaded_agent.save_agent(self.model_save_path)
+
         else:
             print('''Start playing Mancala''')
             input('Press Enter to begin...')
@@ -24,24 +40,23 @@ class Board:
 
             if choice == str(1):
                 print('''Multiplier Game''')
-                self.playerVSPlayer(self)
+                self.playerVSPlayer()
             elif choice == str(2):
                 print('''Human vs Computer Game''')
                 print('''Computer is the player 1''')
                 print('''Human is the player 2''')
-                self.playerVSAI(self)
+                self.playerVSAI()
             elif choice == str(3):  # reinforcement_learning == True:
 
                 base_cwd = os.getcwd()
-                model_dir = base_cwd + "\\model"
+                model_dir = base_cwd
                 if not os.path.exists(model_dir):
                     os.mkdir(model_dir)
-                model_path = "\\mancala_agent.pkl"
+                model_path = "mancala_agent.pkl"
 
                 self.loaded_agent = QlearningRL(load_agent_path=model_path)
                 self.PlayerVSRL()
 
-    @staticmethod
     def playerVSPlayer(self):
 
         board = self.buildBoard()
@@ -78,18 +93,18 @@ class Board:
             # Players move
             if turn == PLAYER1:
                 # Getting the players move
-                move = getMove(board, PLAYER1)
+                move = self.action.getMove(board, PLAYER1)
 
                 # Updating the board
-                board, go_again = move_piece(board, move, PLAYER1)
+                board, go_again = self.action.move_piece(board, move, PLAYER1)
 
             # AI's move
             elif turn == PLAYER2:
                 # Getting the players move
-                move = getMove(board, PLAYER2)
+                move = self.action.getMove(board, PLAYER2)
 
                 # Updating the board
-                board, go_again = move_piece(board, move, PLAYER2)
+                board, go_again = self.action.move_piece(board, move, PLAYER2)
 
             # 4. If the last piece you drop is in your own Mancala, you take another turn.
             if not go_again:
@@ -114,7 +129,7 @@ class Board:
         else:
             print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
 
-    def RLVSRL(self):
+    def playerVSAI(self):
         # Default board, feel free to update if you know what you're doing and want a more interesting game.
         # The code should be set up mostly generic enough to handle different boards / piece amount
 
@@ -123,101 +138,7 @@ class Board:
         #     difficulty_level = 6
 
         board = self.buildBoard()
-        agent = MinimaxPruningAgent()
 
-        # Mapping for how confident the algorithm is on winning the game (ballpark)
-        # total_pieces = sum(board[PLAYER_1_SIDE]) + sum(board[PLAYER_2_SIDE])
-        # winning_confidence_mapping = {
-        #     -(total_pieces // 8): "Terrible",
-        #     -(total_pieces // total_pieces): "Bad",
-        #     total_pieces // 16: "Possible",
-        #     total_pieces // 8: "Good",
-        #     total_pieces + 1: "Certain",
-        # }
-
-        # Displaying the board so the user know what they are selecting
-        self.printBoard(board)
-
-        # Collecting what type the user is
-        AI1 = PLAYER_1_SIDE  # get_player_type()
-        AI2 = PLAYER_2_SIDE
-        MAX_DEPTH = 6
-        # MAX_DEPTH = int(difficulty_level) if 0 < int(difficulty_level) < 7 else 6
-        # print(MAX_DEPTH)
-
-        self.loaded_agent.previous_state = self.get_state(board, player=AI1)
-
-        # Some final inits before starting the game
-        PRINT_P1 = "CPU1"
-        PRINT_P2 = "CPU2"
-
-        # Top always goes first, feel free to change if you want to be a reble
-        turn = AI1
-
-        # visual for what the AI did
-        ai_printed_moves = []
-
-        # While the games not over!!!
-        while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
-            # Players move
-            if turn == AI1:
-                # Getting the AI's move with the Minimax function
-                # best_score, move = agent.minimaxPruning(board, AI1, turn, 6)
-                #
-                # # Visual aid to show of confident the minimax algorithm is in winning
-                # winning_confidence = ""
-                # for score, confidence in winning_confidence_mapping.items():
-                #     if score < best_score:
-                #         continue
-                #     winning_confidence = confidence
-                #     break
-                # ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
-                #
-                # # Updating the board
-                # board, go_again = action.move_piece(board, move, AI1)
-
-                #move = self.loaded_agent.take_action(self.get_state(board, player=AI1), board, AI1)
-
-                move = self.loaded_agent.getMoveAIV2(self.get_state(board, player=AI1), board, AI1)
-
-                self.loaded_agent.update_q(self.get_state(board, player=AI1), board[PLAYER_1_SCORE])
-                board, go_again = move_piece(board, move, AI1)
-
-            # AI's move
-            elif turn == AI2:
-                # Getting the AI's move with the q learning
-                move = self.loaded_agent.getMoveAIV2(self.get_state(board, player=AI2), board, AI2)
-                self.loaded_agent.update_q(self.get_state(board, player=AI2),  board[PLAYER_2_SCORE])
-
-                # Updating the board
-                board, go_again = move_piece(board, move, AI2)
-
-            # 4. If the last piece you drop is in your own Mancala, you take another turn.
-            if not go_again:
-                turn = PLAYER_2_SIDE if turn == PLAYER_1_SIDE else PLAYER_1_SIDE
-
-            # Shows the new baord
-            self.clearScreen()
-            if (turn == AI1) and ai_printed_moves:
-                [print(move) for move in ai_printed_moves]
-                ai_printed_moves = []
-            self.printBoard(board, PRINT_P1, PRINT_P2)
-
-        # WIN / LOSS / DRAW
-        if board[f"{AI1}_score"] > board[f"{AI2}_score"]:
-            print(
-                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
-            )
-        elif board[f"{AI1}_score"] < board[f"{AI2}_score"]:
-            print(
-                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
-            )
-        else:
-            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
-
-    def AIVSRL(self):
-
-        board = self.buildBoard()
         agent = MinimaxPruningAgent()
 
         # Mapping for how confident the algorithm is on winning the game (ballpark)
@@ -232,11 +153,83 @@ class Board:
 
         # Displaying the board so the user know what they are selecting
         self.printBoard(board)
+        # Collecting what type the user is
+        PLAYER = PLAYER_2_SIDE  # get_player_type()
+
+        # Some final inits before starting the game
+        PRINT_P1 = "CPU"
+        PRINT_P2 = "YOU"
+        AI = PLAYER_1_SIDE
+        MAX_DEPTH = 6
+        # MAX_DEPTH = int(difficulty_level) if 0 < int(difficulty_level) < 7 else 6
+        # print(MAX_DEPTH)
+
+        # Top always goes first, feel free to change if you want to be a reble
+        turn = PLAYER_1_SIDE
+
+        # visual for what the AI did
+        ai_printed_moves = []
+
+        # While the games not over!!!
+        while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
+            # Players move
+            if turn == PLAYER:
+                # Getting the players move
+                move = self.action.getMove(board, PLAYER)
+
+                # Updating the board
+                board, go_again = self.action.move_piece(board, move, PLAYER)
+
+            # AI's move
+            elif turn == AI:
+                # Getting the AI's move with the Minimax function
+                best_score, move = agent.minimaxPruning(board, AI, turn, MAX_DEPTH)
+
+                # Visual aid to show of confident the minimax algorithm is in winning
+                winning_confidence = ""
+                for score, confidence in winning_confidence_mapping.items():
+                    if score < best_score:
+                        continue
+                    winning_confidence = confidence
+                    break
+                ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
+
+                # Updating the board
+                board, go_again = self.action.move_piece(board, move, AI)
+
+            # 4. If the last piece you drop is in your own Mancala, you take another turn.
+            if not go_again:
+                turn = PLAYER_2_SIDE if turn == PLAYER_1_SIDE else PLAYER_1_SIDE
+
+            # Shows the new baord
+            self.clearScreen()
+            if (turn == PLAYER) and ai_printed_moves:
+                [print(move) for move in ai_printed_moves]
+                ai_printed_moves = []
+            self.printBoard(board, PRINT_P1, PRINT_P2)
+
+        # WIN / LOSS / DRAW
+        if board[f"{PLAYER}_score"] > board[f"{AI}_score"]:
+            print(
+                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
+            )
+        elif board[f"{PLAYER}_score"] < board[f"{AI}_score"]:
+            print(
+                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
+            )
+        else:
+            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
+
+    def RLVsRL(self):
+
+        board = self.buildBoard()
+
+        # Displaying the board so the user know what they are selecting
+        self.printBoard(board)
 
         # Collecting what type the user is
         AI1 = PLAYER_1_SIDE  # get_player_type()
         AI2 = PLAYER_2_SIDE
-        MAX_DEPTH = 6
 
         self.loaded_agent.previous_state = self.get_state(board, player=AI1)
 
@@ -254,30 +247,20 @@ class Board:
         while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
             # Players move
             if turn == AI1:
-                # Getting the AI's move with the Minimax function
-                best_score, move = agent.minimaxPruning(board, AI1, turn, 6)
 
-                # Visual aid to show of confident the minimax algorithm is in winning
-                winning_confidence = ""
-                for score, confidence in winning_confidence_mapping.items():
-                    if score < best_score:
-                        continue
-                    winning_confidence = confidence
-                    break
-                ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
+                move = self.action.getMoveRL(self.get_state(board, player=AI1), board, AI1)
 
-                # Updating the board
-                board, go_again = move_piece(board, move, AI1)
+                self.loaded_agent.update_q(self.get_state(board, player=AI1), board[PLAYER_1_SCORE])
+                board, go_again = self.action.move_piece(board, move, AI1)
 
             # AI's move
             elif turn == AI2:
                 # Getting the AI's move with the q learning
-                move = self.loaded_agent.take_action(board[AI2])
-
+                move = self.action.getMoveRL(self.get_state(board, player=AI2), board, AI2)
                 self.loaded_agent.update_q(self.get_state(board, player=AI2), board[PLAYER_2_SCORE])
 
                 # Updating the board
-                board, go_again = move_piece(board, move, AI2)
+                board, go_again = self.action.move_piece(board, move, AI2)
 
             # 4. If the last piece you drop is in your own Mancala, you take another turn.
             if not go_again:
@@ -293,14 +276,14 @@ class Board:
         # WIN / LOSS / DRAW
         if board[f"{AI1}_score"] > board[f"{AI2}_score"]:
             print(
-                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
+                f"Congrats! {AI1} won "
             )
         elif board[f"{AI1}_score"] < board[f"{AI2}_score"]:
             print(
-                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
+                f"Congrats! {AI2} won "
             )
         else:
-            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
+            print(f"DRAW!")
 
     def PlayerVSRL(self):
 
@@ -329,21 +312,21 @@ class Board:
             # Players move
             if turn == PLAYER:
                 # Getting the players move
-                move = getMove(board, PLAYER)
+                move = self.action.getMove(board, PLAYER)
 
                 # Updating the board
-                board, go_again = move_piece(board, move, PLAYER)
+                board, go_again = self.action.move_piece(board, move, PLAYER)
 
             # AI's move
             elif turn == AIRL:
 
                 # Getting the AI's move with the q learning
-                move = self.loaded_agent.getMoveAIV2(self.get_state(board, player=AIRL), board, AIRL)
+                move = self.action.getMoveRL(self.get_state(board, player=AIRL), board, AIRL)
                 self.loaded_agent.update_q(self.get_state(board, player=AIRL), board[PLAYER_2_SCORE])
 
                 print('Machine choose pocket ', move)
                 # Updating the board
-                board, go_again = move_piece(board, move, AIRL)
+                board, go_again = self.action.move_piece(board, move, AIRL)
 
             # 4. If the last piece you drop is in your own Mancala, you take another turn.
             if not go_again:
@@ -367,6 +350,7 @@ class Board:
             )
         else:
             print(f"DRAW!")
+        self.loaded_agent.save_agent(self.model_save_path )
 
     @staticmethod
     def AIVSAI(self):
@@ -521,98 +505,6 @@ class Board:
         """
         # Clearing screen to make the game visually appealing when updating
         print("\033c", end="")
-
-    @staticmethod
-    def playerVSAI(self):
-        # Default board, feel free to update if you know what you're doing and want a more interesting game.
-        # The code should be set up mostly generic enough to handle different boards / piece amount
-
-        # difficulty_level = input('Please, select the difficulty level from 1 (very easy) to 6 (very hard): ')
-        # if not difficulty_level.isdigit():
-        #     difficulty_level = 6
-
-        board = self.buildBoard()
-
-        agent = MinimaxPruningAgent()
-
-        # Mapping for how confident the algorithm is on winning the game (ballpark)
-        total_pieces = sum(board[PLAYER_1_SIDE]) + sum(board[PLAYER_2_SIDE])
-        winning_confidence_mapping = {
-            -(total_pieces // 8): "Terrible",
-            -(total_pieces // total_pieces): "Bad",
-            total_pieces // 16: "Possible",
-            total_pieces // 8: "Good",
-            total_pieces + 1: "Certain",
-        }
-
-        # Displaying the board so the user know what they are selecting
-        self.printBoard(board)
-        # Collecting what type the user is
-        PLAYER = PLAYER_2_SIDE  # get_player_type()
-
-        # Some final inits before starting the game
-        PRINT_P1 = "CPU"
-        PRINT_P2 = "YOU"
-        AI = PLAYER_1_SIDE
-        MAX_DEPTH = 6
-        # MAX_DEPTH = int(difficulty_level) if 0 < int(difficulty_level) < 7 else 6
-        # print(MAX_DEPTH)
-
-        # Top always goes first, feel free to change if you want to be a reble
-        turn = PLAYER_1_SIDE
-
-        # visual for what the AI did
-        ai_printed_moves = []
-
-        # While the games not over!!!
-        while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
-            # Players move
-            if turn == PLAYER:
-                # Getting the players move
-                move = getMove(board, PLAYER)
-
-                # Updating the board
-                board, go_again = move_piece(board, move, PLAYER)
-
-            # AI's move
-            elif turn == AI:
-                # Getting the AI's move with the Minimax function
-                best_score, move = agent.minimaxPruning(board, AI, turn, MAX_DEPTH)
-
-                # Visual aid to show of confident the minimax algorithm is in winning
-                winning_confidence = ""
-                for score, confidence in winning_confidence_mapping.items():
-                    if score < best_score:
-                        continue
-                    winning_confidence = confidence
-                    break
-                ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
-
-                # Updating the board
-                board, go_again = action.move_piece(board, move, AI)
-
-            # 4. If the last piece you drop is in your own Mancala, you take another turn.
-            if not go_again:
-                turn = PLAYER_2_SIDE if turn == PLAYER_1_SIDE else PLAYER_1_SIDE
-
-            # Shows the new baord
-            self.clearScreen()
-            if (turn == PLAYER) and ai_printed_moves:
-                [print(move) for move in ai_printed_moves]
-                ai_printed_moves = []
-            self.printBoard(board, PRINT_P1, PRINT_P2)
-
-        # WIN / LOSS / DRAW
-        if board[f"{PLAYER}_score"] > board[f"{AI}_score"]:
-            print(
-                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
-            )
-        elif board[f"{PLAYER}_score"] < board[f"{AI}_score"]:
-            print(
-                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
-            )
-        else:
-            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
 
     @staticmethod
     def get_state(board, player):
