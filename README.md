@@ -84,15 +84,11 @@ where α is the learning rate, an important hyperparameter that we need to tune 
   
 
 ### Class diagrams   
-  
 
 <div align="center">
 <img src="https://drive.google.com/uc?export=view&id=1BL9UoHXe1OCdZ6BSJDaoaG0va5TQpJw1" align="center" height="500" width="" />
 </div>  
   
-
-<br/>  
-
 
 
 
