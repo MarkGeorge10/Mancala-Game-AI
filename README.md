@@ -80,31 +80,19 @@ In the Q-Learning algorithm, the goal is to learn iteratively the optimal Q-valu
 where α is the learning rate, an important hyperparameter that we need to tune since it controls the convergence.  
   
 
-![](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*qksGasRhHjthcDgQFTodJg@2x.png)  
+<img src="https://miro.medium.com/v2/resize:fit:1100/format:webp/1*qksGasRhHjthcDgQFTodJg@2x.png" align="left" style="width: 100%" />  
   
 
 ### Class diagrams   
   
 
 <div align="center">
-<img src="https://pennstateoffice365-my.sharepoint.com/:i:/r/personal/mqf5675_psu_edu/Documents/Mancala%20video/class%20diagram%20mancala.drawio.png?csf=1&web=1&e=QoxZon" align="center" height="500" width="" />
+<img src="https://drive.google.com/uc?export=view&id=1BL9UoHXe1OCdZ6BSJDaoaG0va5TQpJw1" align="center" height="500" width="" />
 </div>  
   
 
 <br/>  
 
 
-## My Skill Set  
-<table><tr><td valign="top" width="33%">
 
 
-
-</td><td valign="top" width="33%">
-
-
-
-</td><td valign="top" width="33%">
-
-
-
-</td></tr></table>  
