@@ -83,6 +83,14 @@ where α is the learning rate, an important hyperparameter that we need to tune 
 ![](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*qksGasRhHjthcDgQFTodJg@2x.png)  
   
 
+### Class diagrams   
+  
+
+<div align="center">
+<img src="https://pennstateoffice365-my.sharepoint.com/:i:/r/personal/mqf5675_psu_edu/Documents/Mancala%20video/class%20diagram%20mancala.drawio.png?csf=1&web=1&e=QoxZon" align="center" height="500" width="" />
+</div>  
+  
+
 <br/>  
 
 
@@ -100,5 +108,3 @@ where α is the learning rate, an important hyperparameter that we need to tune 
 
 
 </td></tr></table>  
-
-<br/>  
