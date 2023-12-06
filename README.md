@@ -23,6 +23,7 @@ The board consists of 12 bins, 6 on each side, and 2 home bins with one on each 
   
 
 ### Adversarial Search Algorithms   
+
   
 
 There are two algorithm techniques within the game Mancala. The first algorithm is the Minimax Algorithm. The Minimax algorithm operates by constructing a game tree, representing all moves and their consequences, and then recursively evaluating the nodes of the tree to determine the best move at each level. The Minimax Algorithm can find an optimal solution even if the game tree is finite. Time and space complexity is O(b^m), where b is the average number of moves per state, and m is the maximum depth of the game tree. The pseudo code of the algorithm. The primary challenge with the Minimax Algorithm lies in its requirement to evaluate an exponentially increasing number of game states as the depth of the game tree increases. While we cannot eliminate the exponential growth, we can effectively cut it in half and compute the correct minimax decision without looking at every node in the game tree. This leads us to the Minimax Alpha-beta pruning algorithm.  
@@ -99,7 +100,8 @@ where α is the learning rate, an important hyperparameter that we need to tune 
   
 
 <div align="center">
-<img src="https://drive.google.com/uc?export=view&id=1BL9UoHXe1OCdZ6BSJDaoaG0va5TQpJw1" align="center" height="500" width="" />
+
+<img src="![class diagram mancala drawio (1)](https://github.com/MarkGeorge10/Mancala-Game-AI/assets/34999954/e9081922-3902-4f73-aacf-d1d71a030546)" align="center" height="500" width="" />
 </div>  
   
 
