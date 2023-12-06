@@ -1,3 +1,14 @@
+##  How to run the Program  
+
+1- Go to the main.py and run 
+
+2- you will get message in the terminal 
+            ” Start Program 
+              if you want to start playing press Y, if you want to train machine press T”  then choose y or choose t to train reinforcement q learning 
+              if you chose “y,” and then you would get another message “If you would like to play multiplier press 1, or vs computer with Minimax pruning Algorithm press 2, or play with reinforcement computer                   press 3” 
+
+              and then you can play 
+
 ##  Mancala Game and Artificial Intelligence  
   
 
