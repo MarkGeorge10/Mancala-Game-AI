@@ -182,14 +182,14 @@ class Action:
             try:
                 player_move = player_move
             except ValueError:
-                print("Please Make Sure To Enter A Valid Number.")
-                self.loaded_agent.update_q(current_state, -100000000000)
+                # print("Please Make Sure To Enter A Valid Number.")
+                self.loaded_agent.update_q(current_state, 0)
                 continue
 
             if self.is_legal_move(board, player_move, turn):
                 return player_move
 
-            print("Sorry, That Is Not A Valid Move.")
+            # print("Sorry, That Is Not A Valid Move.")
 
     def take_action(self, current_state):
         # Random action 1-epsilon percent of the time
@@ -209,8 +209,5 @@ class Action:
 
         # # Convert computer randomness to appropriate action for mancala usage
         # converted_action = action
-
-        print("machine action")
-        print(action)
 
         return action

@@ -24,12 +24,12 @@ class QlearningRL:
     def update_q(self, current_state, reward=0):
 
         # Assume no reward unless explicitly specified
-        print("current_state")
-        print(current_state)
+        # print("current_state")
+        # print(current_state)
         # Convert state to a unique identifier
         hashed_current_state = hash(''.join(map(str, str(current_state))))
-        print("hashed_current_state")
-        print(hashed_current_state)
+        # print("hashed_current_state")
+        # print(hashed_current_state)
         hashed_previous_state = hash(''.join(map(str, self.previous_state)))
 
         current_q_set = self.state_map.get(hashed_current_state)
