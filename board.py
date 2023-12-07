@@ -15,11 +15,8 @@ class Board:
         self.action = Action(qlearningAgent=self.loaded_agent)
         self.model_save_path = 'mancala_agent.pkl'
         if reinforcementLearning:
-            print('aaaaaaaaaaaaaaaaaa')
             n_games = 10000
             games_per_checkpoint = 2500
-
-
             while n_games > 0:
                 self.RLVsRL()
                 # Checkpoint
@@ -30,13 +27,11 @@ class Board:
                 n_games -= 1
                 # Save final agent model
             self.loaded_agent.save_agent(self.model_save_path)
-
         else:
-            print('''Start playing Mancala''')
-            input('Press Enter to begin...')
+
 
             choice = input(
-                'If you would like to play multiplier press 1, or vs computer press 2, or press 3 to play with learner computer')
+                'If you would like to play multiplier press 1, or vs computer with Minimax pruning Algorithm press 2, or  play with reinforecement computer press 3')
 
             if choice == str(1):
                 print('''Multiplier Game''')
@@ -324,7 +319,7 @@ class Board:
                 move = self.action.getMoveRL(self.get_state(board, player=AIRL), board, AIRL)
                 self.loaded_agent.update_q(self.get_state(board, player=AIRL), board[PLAYER_2_SCORE])
 
-                print('Machine choose pocket ', move)
+                print('Machine choose pocket ', move+1)
                 # Updating the board
                 board, go_again = self.action.move_piece(board, move, AIRL)
 
@@ -350,106 +345,7 @@ class Board:
             )
         else:
             print(f"DRAW!")
-        self.loaded_agent.save_agent(self.model_save_path )
-
-    @staticmethod
-    def AIVSAI(self):
-        # Default board, feel free to update if you know what you're doing and want a more interesting game.
-        # The code should be set up mostly generic enough to handle different boards / piece amount
-
-        # difficulty_level = input('Please, select the difficulty level from 1 (very easy) to 6 (very hard): ')
-        # if not difficulty_level.isdigit():
-        #     difficulty_level = 6
-
-        board = self.buildBoard()
-        agent = MinimaxPruningAgent()
-        # Mapping for how confident the algorithm is on winning the game (ballpark)
-        total_pieces = sum(board[PLAYER_1_SIDE]) + sum(board[PLAYER_2_SIDE])
-        winning_confidence_mapping = {
-            -(total_pieces // 8): "Terrible",
-            -(total_pieces // total_pieces): "Bad",
-            total_pieces // 16: "Possible",
-            total_pieces // 8: "Good",
-            total_pieces + 1: "Certain",
-        }
-
-        # Displaying the board so the user know what they are selecting
-        self.printBoard(board)
-        # Collecting what type the user is
-        AI1 = PLAYER_2_SIDE  # get_player_type()
-
-        # Some final inits before starting the game
-        PRINT_P1 = "CPU"
-        PRINT_P2 = "YOU"
-        AI2 = PLAYER_1_SIDE
-        MAX_DEPTH = 6
-        # MAX_DEPTH = int(difficulty_level) if 0 < int(difficulty_level) < 7 else 6
-        # print(MAX_DEPTH)
-
-        # Top always goes first, feel free to change if you want to be a reble
-        turn = PLAYER_1_SIDE
-
-        # visual for what the AI did
-        ai_printed_moves = []
-
-        # While the games not over!!!
-        while not ((not any(board[PLAYER_1_SIDE])) or (not any(board[PLAYER_2_SIDE]))):
-            # Players move
-            if turn == AI1:
-                # Getting the AI's move with the Minimax function
-                best_score, move = agent.minimaxPruning(board, AI1, turn, 6)
-
-                # Visual aid to show of confident the minimax algorithm is in winning
-                winning_confidence = ""
-                for score, confidence in winning_confidence_mapping.items():
-                    if score < best_score:
-                        continue
-                    winning_confidence = confidence
-                    break
-                ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
-
-                # Updating the board
-                board, go_again = move_piece(board, move, AI1)
-
-            # AI's move
-            elif turn == AI2:
-                # Getting the AI's move with the Minimax function
-                best_score, move = agent.minimaxPruning(board, AI2, turn, MAX_DEPTH)
-
-                # Visual aid to show of confident the minimax algorithm is in winning
-                winning_confidence = ""
-                for score, confidence in winning_confidence_mapping.items():
-                    if score < best_score:
-                        continue
-                    winning_confidence = confidence
-                    break
-                ai_printed_moves.append(f"AI Moved : {move + 1}\tChance of Winning : {winning_confidence}")
-
-                # Updating the board
-                board, go_again = move_piece(board, move, AI2)
-
-            # 4. If the last piece you drop is in your own Mancala, you take another turn.
-            if not go_again:
-                turn = PLAYER_2_SIDE if turn == PLAYER_1_SIDE else PLAYER_1_SIDE
-
-            # Shows the new baord
-            self.clearScreen()
-            if (turn == AI1) and ai_printed_moves:
-                [print(move) for move in ai_printed_moves]
-                ai_printed_moves = []
-            self.printBoard(board, PRINT_P1, PRINT_P2)
-
-        # WIN / LOSS / DRAW
-        if board[f"{AI1}_score"] > board[f"{AI2}_score"]:
-            print(
-                f"Congrats! You won when the AI looks {MAX_DEPTH} moves ahead. For more of a challenge try increasing the MAX_DEPTH value."
-            )
-        elif board[f"{AI1}_score"] < board[f"{AI2}_score"]:
-            print(
-                f"Nice try, but the machines win this time! For an easier game try decreasing the MAX_DEPTH value."
-            )
-        else:
-            print(f"DRAW! Are you too looking {MAX_DEPTH} moves ahead?")
+        self.loaded_agent.save_agent(self.model_save_path)
 
     @staticmethod
     def buildBoard():
