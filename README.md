@@ -100,7 +100,8 @@ where α is the learning rate, an important hyperparameter that we need to tune 
   
 
 <div align="center">
-![class diagram mancala drawio (3)](https://github.com/MarkGeorge10/Mancala-Game-AI/assets/34999954/b3555b49-407b-42f2-8d0d-cec4456f2c0f)
+![class diagram mancala drawio (3)](https://github.com/MarkGeorge10/Mancala-Game-AI/assets/34999954/1c8abfc1-8203-4eed-80f2-b20d4b0045a6)
+
 
 </div>  
   
