@@ -4,17 +4,17 @@
 </div>  
 
 ## File Architecture 
-|── Board.py 
-|── main.py 
-|── transition_model 
-            |── transitionmodel.py 
-
-|── agent 
-            |── qLearning.py 
-            |── minimaxPruningAgent.py 
-|── actions 
-            |── action.py 
-|── README.md 
+            |── Board.py 
+            |── main.py 
+            |── transition_model 
+                        |── transitionmodel.py 
+            
+            |── agent 
+                        |── qLearning.py 
+                        |── minimaxPruningAgent.py 
+            |── actions 
+                        |── action.py 
+            |── README.md 
 ##  Execution Procedure 
 
 1- Begin the process by navigating to the main.py file and initiating the program.  
